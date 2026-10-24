@@ -1,0 +1,15 @@
+We are looking for an experienced Senior Python Software Engineer to join our core backend engineering team. In this role, you will architect, build, and maintain high-throughput REST APIs and microservices using Python, Flask, and FastAPI.
+
+Key Responsibilities:
+- Design and optimize scalable relational database schemas using PostgreSQL and SQLAlchemy.
+- Build low-latency caching layers with Redis and implement event-driven task queues with Celery or Apache Kafka.
+- Containerize backend services using Docker and orchestrate deployments on Kubernetes and AWS.
+- Collaborate with frontend engineers using React and TypeScript to define clean API contracts.
+- Champion engineering best practices, including Test-Driven Development (TDD) with PyTest, CI/CD pipelines via GitHub Actions, and thorough code reviews.
+- Drive system design discussions, performance profiling, and continuous observability with Prometheus and Datadog.
+
+Qualifications:
+- Bachelor's degree in Computer Science, Software Engineering, or equivalent practical experience.
+- 3+ years of professional backend development experience with Python, SQL, and Git.
+- Demonstrated experience deploying production cloud infrastructure on AWS or GCP.
+- Strong problem-solving skills, written communication, and cross-functional team leadership.
