@@ -1,0 +1,1032 @@
+/* ==========================================================================
+   REDLINE - Editorial Resume Proofing Desk Styling
+   Locked Palette & Manuscript Aesthetic
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Design Tokens & Color Palette
+   -------------------------------------------------------------------------- */
+:root {
+  /* Light Theme (Default) */
+  --paper: #F5F1E8;
+  --paper-2: #EBE5D6;
+  --ink: #14213D;
+  --ink-2: #4A5568;
+  --rule: #CFC8B6;
+  --accent: #B5461B;
+  --good: #2F6B4F;
+  --warn: #A27B1E;
+  --bad: #A63A2B;
+  --mark: rgba(242, 217, 139, 0.65);
+  --mark-text: #14213D;
+
+  /* Typography */
+  --font-serif: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", "SF Mono", Consolas, Menlo, monospace;
+
+  /* Layout geometry */
+  --max-width: 1120px;
+  --margin-col-width: 160px;
+  --gap-col: 2.5rem;
+  --rule-width: 1px;
+}
+
+[data-theme="dark"] {
+  /* Dark Theme */
+  --paper: #0F1A2E;
+  --paper-2: #17233B;
+  --ink: #F1EBDD;
+  --ink-2: #A9B2C3;
+  --rule: #2C3A55;
+  --accent: #E08A5B;
+  --good: #6FBF9A;
+  --warn: #D9B24C;
+  --bad: #E07A6B;
+  --mark: rgba(138, 116, 36, 0.55);
+  --mark-text: #F1EBDD;
+}
+
+/* --------------------------------------------------------------------------
+   Reset & Document Base
+   -------------------------------------------------------------------------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  background-color: var(--paper);
+  color: var(--ink);
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  line-height: 1.6;
+  background-color: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+  padding: 0 1.25rem 4rem 1.25rem;
+}
+
+/* --------------------------------------------------------------------------
+   Typography & Hierarchy
+   -------------------------------------------------------------------------- */
+h1, h2, h3, h4 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+p, li, dd {
+  max-width: 70ch;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: opacity 0.15s ease;
+}
+
+a:hover {
+  opacity: 0.8;
+}
+
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.label-caps {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+/* --------------------------------------------------------------------------
+   Layout: Manuscript Editorial Proofing Desk
+   -------------------------------------------------------------------------- */
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+/* Masthead */
+.masthead {
+  padding: 2.5rem 0 1.5rem 0;
+  border-bottom: var(--rule-width) solid var(--rule);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.masthead-brand {
+  display: flex;
+  flex-direction: column;
+}
+
+.masthead-title {
+  font-size: clamp(2rem, 1.6rem + 1.8vw, 3rem);
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.masthead-tagline {
+  font-family: var(--font-sans);
+  font-style: italic;
+  font-size: 0.9375rem;
+  color: var(--ink-2);
+  margin-top: 0.25rem;
+}
+
+.masthead-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: var(--rule-width) solid var(--rule);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 1px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-ghost:hover {
+  background-color: var(--paper-2);
+  border-color: var(--ink-2);
+}
+
+/* Editorial Sections: Numbered margin column + content column */
+.manuscript-section {
+  display: grid;
+  grid-template-columns: var(--margin-col-width) 1fr;
+  column-gap: var(--gap-col);
+  padding: 3rem 0;
+  border-bottom: var(--rule-width) solid var(--rule);
+}
+
+.section-margin {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.section-number {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--accent);
+}
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-2);
+}
+
+.section-content {
+  min-width: 0;
+}
+
+.section-title {
+  font-size: 1.625rem;
+  margin-bottom: 0.5rem;
+}
+
+.section-desc {
+  color: var(--ink-2);
+  margin-bottom: 1.5rem;
+  font-size: 0.9375rem;
+}
+
+/* --------------------------------------------------------------------------
+   01 Submit Section: Drop slot & Textarea
+   -------------------------------------------------------------------------- */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 2rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.input-label {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--ink);
+  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+}
+
+.word-count-badge {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-2);
+}
+
+.word-count-badge.valid {
+  color: var(--good);
+}
+
+.word-count-badge.invalid {
+  color: var(--bad);
+}
+
+/* Paper drop slot */
+.drop-slot {
+  border: 1px dashed var(--rule);
+  background-color: var(--paper-2);
+  padding: 2.25rem 1.5rem;
+  text-align: center;
+  border-radius: 1px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.drop-slot:hover, .drop-slot.dragover {
+  border-color: var(--accent);
+  background-color: var(--paper);
+}
+
+.drop-slot-icon {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+}
+
+.drop-slot-text {
+  font-size: 0.9375rem;
+  color: var(--ink);
+}
+
+.drop-slot-hint {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-2);
+}
+
+.drop-slot-file {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--good);
+  word-break: break-all;
+  display: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Textarea: Like lines on paper */
+.paper-textarea {
+  width: 100%;
+  min-height: 220px;
+  padding: 1rem;
+  background-color: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 1px;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--ink);
+  resize: vertical;
+  transition: border-color 0.15s ease;
+}
+
+.paper-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.form-actions {
+  margin-top: 1.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.btn-primary {
+  background-color: var(--accent);
+  color: #FFFFFF;
+  border: 1px solid var(--accent);
+  padding: 0.75rem 2rem;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 500;
+  border-radius: 1px;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Inline status & error banners */
+.status-banner {
+  padding: 0.85rem 1.25rem;
+  border-left: 3px solid var(--rule);
+  background-color: var(--paper-2);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  margin-top: 1.5rem;
+  display: none;
+}
+
+.status-banner.error {
+  border-color: var(--bad);
+  color: var(--bad);
+  display: block;
+}
+
+.status-banner.info {
+  border-color: var(--accent);
+  color: var(--ink);
+  display: block;
+}
+
+/* Rotating Progress State */
+.reading-progress {
+  display: none;
+  margin-top: 1.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--accent);
+}
+
+.reading-progress.active {
+  display: block;
+}
+
+/* --------------------------------------------------------------------------
+   02 Verdict Section: Huge Typographic Score
+   -------------------------------------------------------------------------- */
+.verdict-layout {
+  display: flex;
+  align-items: baseline;
+  gap: 2.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.verdict-numeral {
+  font-family: var(--font-serif);
+  font-size: clamp(4.5rem, 3.5rem + 4vw, 7.5rem);
+  font-weight: 400;
+  line-height: 0.9;
+  color: var(--accent);
+  letter-spacing: -0.04em;
+}
+
+.verdict-copy {
+  flex: 1;
+  min-width: 260px;
+}
+
+.verdict-headline {
+  font-size: 1.35rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.verdict-breakdown {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+}
+
+.stats-trio {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: var(--rule-width) solid var(--rule);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-numeral {
+  font-family: var(--font-mono);
+  font-size: 1.75rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+}
+
+/* --------------------------------------------------------------------------
+   03 Skills Section: Marked Up & Redlined
+   -------------------------------------------------------------------------- */
+.skills-group {
+  margin-bottom: 2rem;
+}
+
+.skills-group-title {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  margin-bottom: 0.75rem;
+}
+
+.skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  line-height: 1.8;
+}
+
+/* Matched skills: highlighter marker */
+.skill-tag.matched {
+  background-color: var(--mark);
+  color: var(--mark-text);
+  padding: 0.15rem 0.45rem;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  border-bottom: 1px solid rgba(47, 107, 79, 0.4);
+}
+
+/* Missing skills: redlined strike or warning */
+.skill-tag.missing {
+  color: var(--bad);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  border-bottom: 1.5px dashed var(--bad);
+  padding: 0.15rem 0.45rem;
+  background-color: transparent;
+}
+
+/* Extra skills: neutral subtle */
+.skill-tag.extra {
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  border-bottom: 1px dotted var(--rule);
+  padding: 0.15rem 0.45rem;
+}
+
+/* Thin horizontal bar skill coverage */
+.category-bars {
+  margin-top: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 200px 1fr 60px;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.bar-label {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thin-track {
+  width: 100%;
+  height: 4px;
+  background-color: var(--rule);
+  border-radius: 1px;
+  position: relative;
+  overflow: hidden;
+}
+
+.thin-fill {
+  height: 100%;
+  background-color: var(--good);
+  transition: width 0.6s ease;
+}
+
+.bar-val {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+  text-align: right;
+}
+
+/* Single Chart.js container */
+.chart-container-box {
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: var(--rule-width) solid var(--rule);
+}
+
+/* --------------------------------------------------------------------------
+   04 Profile Read: Structured Ledger
+   -------------------------------------------------------------------------- */
+.ledger-section {
+  margin-bottom: 2.5rem;
+}
+
+.ledger-header {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding-bottom: 0.4rem;
+  border-bottom: var(--rule-width) solid var(--rule);
+  margin-bottom: 1rem;
+}
+
+.ledger-item {
+  padding: 0.85rem 0;
+  border-bottom: 1px dotted var(--rule);
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 1.5rem;
+}
+
+.ledger-key {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+}
+
+.ledger-val {
+  color: var(--ink);
+}
+
+.ledger-val strong {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+.ledger-val ul {
+  list-style: none;
+  margin-top: 0.35rem;
+}
+
+.ledger-val li {
+  position: relative;
+  padding-left: 1rem;
+  font-size: 0.875rem;
+  color: var(--ink-2);
+  margin-bottom: 0.25rem;
+}
+
+.ledger-val li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--rule);
+}
+
+/* --------------------------------------------------------------------------
+   05 Annotated Resume: Document Page + Margin Notes
+   -------------------------------------------------------------------------- */
+.annotated-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 2rem;
+  align-items: start;
+}
+
+.manuscript-page {
+  background-color: var(--paper-2);
+  border: var(--rule-width) solid var(--rule);
+  padding: 2.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  max-height: 700px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.annotated-highlight {
+  background-color: var(--mark);
+  color: var(--mark-text);
+  padding: 0 2px;
+  border-bottom: 1px solid rgba(47, 107, 79, 0.4);
+}
+
+.margin-notes-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.margin-note-card {
+  border-left: 2px solid var(--accent);
+  padding: 0.5rem 0.85rem;
+  background-color: var(--paper-2);
+  font-size: 0.8125rem;
+}
+
+.note-numeral {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+.note-target {
+  font-family: var(--font-mono);
+  color: var(--bad);
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+  text-decoration: line-through;
+}
+
+.note-text {
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+
+/* --------------------------------------------------------------------------
+   06 Editor's Notes: AI Suggestions & Rewritten Bullets
+   -------------------------------------------------------------------------- */
+.ai-summary-box {
+  background-color: var(--paper-2);
+  border-left: 3px solid var(--accent);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+  font-style: italic;
+  font-family: var(--font-serif);
+  font-size: 1.0625rem;
+  color: var(--ink);
+  line-height: 1.6;
+}
+
+.concrete-suggestions {
+  list-style: none;
+  counter-reset: suggestion-counter;
+  margin-bottom: 2.5rem;
+}
+
+.concrete-suggestions li {
+  counter-increment: suggestion-counter;
+  position: relative;
+  padding: 0.75rem 0 0.75rem 2.25rem;
+  border-bottom: 1px dotted var(--rule);
+  font-size: 0.9375rem;
+}
+
+.concrete-suggestions li::before {
+  content: counter(suggestion-counter, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  top: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--accent);
+}
+
+.bullet-revisions {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.revision-card {
+  border: var(--rule-width) solid var(--rule);
+  background-color: var(--paper-2);
+  padding: 1.25rem 1.5rem;
+}
+
+.rev-header {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  margin-bottom: 0.35rem;
+}
+
+.rev-original {
+  font-size: 0.875rem;
+  color: var(--bad);
+  text-decoration: line-through;
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+.rev-improved {
+  font-size: 0.9375rem;
+  color: var(--good);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.rev-rationale {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-2);
+}
+
+.tailored-summary-box {
+  border-top: var(--rule-width) solid var(--rule);
+  padding-top: 1.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   07 ATS Check: Editorial Checklist
+   -------------------------------------------------------------------------- */
+.ats-score-bar {
+  display: flex;
+  align-items: baseline;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.ats-score-numeral {
+  font-family: var(--font-serif);
+  font-size: 3.5rem;
+  color: var(--good);
+}
+
+.ats-checklist-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ats-checklist-table th, .ats-checklist-table td {
+  padding: 0.85rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px dotted var(--rule);
+  font-size: 0.875rem;
+}
+
+.ats-checklist-table th {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  border-bottom: var(--rule-width) solid var(--rule);
+}
+
+.status-badge {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.status-badge.pass {
+  color: var(--good);
+}
+
+.status-badge.warn {
+  color: var(--warn);
+}
+
+.status-badge.fail {
+  color: var(--bad);
+}
+
+/* --------------------------------------------------------------------------
+   Footer & Action Ribbon
+   -------------------------------------------------------------------------- */
+.footer-ribbon {
+  padding: 3rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  border-top: var(--rule-width) solid var(--rule);
+}
+
+.footer-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* --------------------------------------------------------------------------
+   History Modal & Drawer
+   -------------------------------------------------------------------------- */
+.history-modal {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 26, 46, 0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.5rem;
+}
+
+.history-modal.active {
+  display: flex;
+}
+
+.history-dialog {
+  background-color: var(--paper);
+  border: var(--rule-width) solid var(--rule);
+  width: 100%;
+  max-width: 680px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: var(--rule-width) solid var(--rule);
+  padding-bottom: 0.75rem;
+}
+
+.history-item {
+  padding: 1rem 0;
+  border-bottom: 1px dotted var(--rule);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.history-score {
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  color: var(--accent);
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Layout (Desktop, Tablet, 360px Mobile)
+   -------------------------------------------------------------------------- */
+@media (max-width: 860px) {
+  .manuscript-section {
+    grid-template-columns: 1fr;
+    row-gap: 1rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .annotated-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ledger-item {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
+
+  .bar-row {
+    grid-template-columns: 140px 1fr 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    padding: 0 0.85rem 3rem 0.85rem;
+  }
+
+  .manuscript-section {
+    padding: 2rem 0;
+  }
+
+  .verdict-numeral {
+    font-size: 4rem;
+  }
+
+  .stats-trio {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .bar-row {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  .bar-val {
+    text-align: left;
+  }
+
+  .manuscript-page {
+    padding: 1.25rem;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Reduced Motion
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Print Stylesheet
+   -------------------------------------------------------------------------- */
+@media print {
+  body {
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    font-size: 11pt;
+  }
+
+  .masthead-controls,
+  #section-submit,
+  .footer-ribbon,
+  .history-modal,
+  .btn-ghost,
+  .btn-primary {
+    display: none !important;
+  }
+
+  .manuscript-section {
+    page-break-inside: avoid;
+    border-bottom: 1px solid #CCCCCC !important;
+    padding: 1.5rem 0 !important;
+  }
+
+  .manuscript-page {
+    background-color: #FFFFFF !important;
+    border: 1px solid #CCCCCC !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .verdict-numeral {
+    color: #000000 !important;
+  }
+}

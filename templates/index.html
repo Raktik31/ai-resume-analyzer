@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Redline - An editorial AI resume analyzer and proofing desk. Scored against job descriptions using TF-IDF matching, ATS readiness auditing, and Gemini AI.">
+  <title>Redline — A second pair of eyes on your resume</title>
+
+  <!-- Google Fonts: Fraunces (Serif), IBM Plex Sans (Sans), IBM Plex Mono (Mono) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+  <!-- Chart.js CDN (Single visual) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+  <!-- Redline Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <div class="container">
+    <!-- Masthead -->
+    <header class="masthead">
+      <div class="masthead-brand">
+        <h1 class="masthead-title">Redline</h1>
+        <p class="masthead-tagline">A second pair of eyes on your resume.</p>
+      </div>
+      <nav class="masthead-controls" aria-label="Editor controls">
+        <button id="history-link" class="btn-ghost" type="button">History</button>
+        <button id="theme-toggle" class="btn-ghost" type="button" aria-label="Toggle dark mode">Dark theme</button>
+      </nav>
+    </header>
+
+    <main>
+      <!-- 01 Submission Section -->
+      <section id="section-submit" class="manuscript-section" aria-labelledby="label-01">
+        <div class="section-margin">
+          <span class="section-number">01</span>
+          <span id="label-01" class="section-label">Submission</span>
+        </div>
+        <div class="section-content">
+          <h2 class="section-title">Upload Manuscript &amp; Target Role</h2>
+          <p class="section-desc">Submit your PDF resume and the target job description. The engine validates typography, extracts skills, tests ATS compliance, and compares vocabulary density.</p>
+
+          <form id="analysis-form" novalidate>
+            <div class="form-grid">
+              <!-- Resume Slot -->
+              <div class="input-group">
+                <span class="input-label">Resume Document <span class="label-caps">(PDF Only &bull; 5MB Max)</span></span>
+                <div id="drop-slot" class="drop-slot" tabindex="0" role="button" aria-label="Drop resume PDF here or click to browse">
+                  <div class="drop-slot-icon">[ DRAG &amp; DROP RESUME ]</div>
+                  <div class="drop-slot-text">Drop your PDF resume into the proofing slot</div>
+                  <div class="drop-slot-hint">or click to browse your local filesystem</div>
+                  <div id="file-selected-label" class="drop-slot-file"></div>
+                  <input type="file" id="file-input" class="sr-only" accept=".pdf,application/pdf" aria-label="Select PDF resume">
+                </div>
+              </div>
+
+              <!-- Job Description -->
+              <div class="input-group">
+                <label for="jd-input" class="input-label">
+                  Target Job Description
+                  <span id="word-count-badge" class="word-count-badge">0 / 40 words min</span>
+                </label>
+                <textarea id="jd-input" class="paper-textarea" placeholder="Paste the job description, required qualifications, and core responsibilities here…" rows="8" required></textarea>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button id="analyze-btn" type="submit" class="btn-primary">Analyse Resume</button>
+            </div>
+
+            <!-- Rotating Plain Text Progress State -->
+            <div id="reading-progress" class="reading-progress" aria-live="polite">
+              <span id="progress-line">Reading the page…</span>
+            </div>
+
+            <!-- Inline Validation & Status Messages -->
+            <div id="status-banner" class="status-banner" role="alert" aria-live="assertive"></div>
+          </form>
+        </div>
+      </section>
+
+      <!-- 02 Verdict Section (Hidden until analyzed) -->
+      <section id="section-verdict" class="manuscript-section results-revealed" style="display: none;" aria-labelledby="label-02">
+        <div class="section-margin">
+          <span class="section-number">02</span>
+          <span id="label-02" class="section-label">Verdict</span>
+        </div>
+        <div class="section-content">
+          <h2 class="section-title">Hiring Alignment</h2>
+          <div class="verdict-layout">
+            <div id="verdict-score" class="verdict-numeral">--%</div>
+            <div class="verdict-copy">
+              <div id="verdict-headline" class="verdict-headline">Evaluating alignment…</div>
+              <div id="verdict-formula" class="verdict-breakdown">Blended 60% Skill Match + 40% TF-IDF Cosine Similarity.</div>
+            </div>
+          </div>
+
+          <div class="stats-trio">
+            <div class="stat-item">
+              <span id="stat-matched-skills" class="stat-numeral">0</span>
+              <span class="stat-label">Skills Matched</span>
+            </div>
+            <div class="stat-item">
+              <span id="stat-missing-skills" class="stat-numeral" style="color: var(--bad);">0</span>
+              <span class="stat-label">Critical Gaps</span>
+            </div>
+            <div class="stat-item">
+              <span id="stat-ats-score" class="stat-numeral" style="color: var(--good);">--%</span>
+              <span class="stat-label">ATS Readiness</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 03 Skills Audit Section (Hidden until analyzed) -->
+      <section id="section-skills" class="manuscript-section results-revealed" style="display: none;" aria-labelledby="label-03">
+        <div class="section-margin">
+          <span class="section-number">03</span>
+          <span id="label-03" class="section-label">Skills Audit</span>
+        </div>
+        <div class="section-content">
+          <h2 class="section-title">Requirements &amp; Taxonomy Coverage</h2>
+          <p class="section-desc">Identified against our curated taxonomy of 340+ canonical skills and alias normalization rules.</p>
+
+          <!-- Matched Skills -->
+          <div class="skills-group">
+            <div class="skills-group-title">[✓] Verified In Resume &amp; Role</div>
+            <div id="matched-skills-list" class="skills-list"></div>
+          </div>
+
+          <!-- Missing Skills -->
+          <div class="skills-group">
+            <div class="skills-group-title" style="color: var(--bad);">[✗] Required In Role &bull; Missing In Resume</div>
+            <div id="missing-skills-list" class="skills-list"></div>
+          </div>
+
+          <!-- Extra Skills -->
+          <div class="skills-group">
+            <div class="skills-group-title">[+] Additional Resume Competencies</div>
+            <div id="extra-skills-list" class="skills-list"></div>
+          </div>
+
+          <!-- Category Coverage Breakdown (Thin horizontal lines) -->
+          <div class="skills-group">
+            <div class="skills-group-title">Coverage By Technical Domain</div>
+            <div id="category-bars-list" class="category-bars"></div>
+          </div>
+
+          <!-- Single Flat Chart.js Visual -->
+          <div class="chart-container-box">
+            <div class="skills-group-title">Domain Distribution Analysis</div>
+            <div style="position: relative; height: 260px; width: 100%;">
+              <canvas id="category-chart" aria-label="Category coverage horizontal bar chart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 04 Profile Read (Ledger) (Hidden until analyzed) -->
+      <section id="section-profile" class="manuscript-section results-revealed" style="display: none;" aria-labelledby="label-04">
+        <div class="section-margin">
+          <span class="section-number">04</span>
+          <span id="label-04" class="section-label">Profile Read</span>
+        </div>
+        <div class="section-content">
+          <h2 class="section-title">Extracted Ledger</h2>
+          <p class="section-desc">Structured entities detected through section-heading heuristics, degrees, dates, and organizations.</p>
+
+          <div id="profile-ledger"></div>
+        </div>
+      </section>
+
+      <!-- 05 Annotated Resume (Hidden until analyzed) -->
+      <section id="section-annotated" class="manuscript-section results-revealed" style="display: none;" aria-labelledby="label-05">
+        <div class="section-margin">
+          <span class="section-number">05</span>
+          <span id="label-05" class="section-label">Annotated Resume</span>
+        </div>
+        <div class="section-content">
+          <h2 class="section-title">Editor's Marked-Up Manuscript</h2>
+          <p class="section-desc">Extracted document page with matched technical vocabulary highlighted and margin proofing notes.</p>
+
+          <div class="annotated-layout">
+            <div id="annotated-page" class="manuscript-page"></div>
+            <aside id="margin-notes" class="margin-notes-pane" aria-label="Editor margin notes"></aside>
+          </div>
+        </div>
+      </section>
+
+      <!-- 06 Editor's Notes & AI Suggestions (Hidden until analyzed) -->
+      <section id="section-editorial" class="manuscript-section results-revealed" style="display: none;" aria-labelledby="label-06">
+        <div class="section-margin">
+          <span class="section-number">06</span>
+          <span id="label-06" class="section-label">Editor's Notes</span>
+        </div>
+        <div class="section-content">
+          <h2 class="section-title">Strategic Improvements &amp; Revisions</h2>
+          <p class="section-desc">Synthesized recommendations powered by Google Gemini with deterministic fallback proofing.</p>
+
+          <div id="ai-fallback-notice" class="status-banner info" style="display: none; margin-bottom: 1.5rem;"></div>
+
+          <div id="ai-executive-summary" class="ai-summary-box"></div>
+
+          <div class="skills-group">
+            <div class="skills-group-title">Priority Recommendations</div>
+            <ol id="ai-suggestions-list" class="concrete-suggestions"></ol>
+          </div>
+
+          <div class="skills-group">
+            <div class="skills-group-title">Line-by-Line Bullet Revisions</div>
+            <div id="ai-bullet-revisions" class="bullet-revisions"></div>
+          </div>
+
+          <div class="tailored-summary-box">
+            <div class="skills-group-title">Suggested Professional Summary</div>
+            <p id="ai-tailored-summary" style="font-size: 0.9375rem; line-height: 1.6; color: var(--ink);"></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 07 ATS Readiness Check (Hidden until analyzed) -->
+      <section id="section-ats" class="manuscript-section results-revealed" style="display: none;" aria-labelledby="label-07">
+        <div class="section-margin">
+          <span class="section-number">07</span>
+          <span id="label-07" class="section-label">ATS Audit</span>
+        </div>
+        <div class="section-content">
+          <h2 class="section-title">Parser Compliance &amp; Structural Checklist</h2>
+          <p class="section-desc">Audits parser-friendliness, contact detection, date chronologies, and layout artifacts.</p>
+
+          <div class="ats-score-bar">
+            <div id="ats-score-num" class="ats-score-numeral">--%</div>
+            <div>
+              <div style="font-weight: 500; font-size: 1.125rem;">ATS Readiness Index</div>
+              <div id="ats-summary-text" class="verdict-breakdown">Calculating compliance checklist…</div>
+            </div>
+          </div>
+
+          <table class="ats-checklist-table">
+            <thead>
+              <tr>
+                <th scope="col">Status</th>
+                <th scope="col">Criterion</th>
+                <th scope="col">Finding</th>
+                <th scope="col">Guidance</th>
+              </tr>
+            </thead>
+            <tbody id="ats-checklist-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer Ribbon -->
+    <footer id="footer-ribbon" class="footer-ribbon" style="display: none;">
+      <div class="footer-brand">
+        <span style="font-family: var(--font-serif); font-size: 1.25rem; font-weight: 600;">Redline</span>
+        <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-2); margin-left: 0.5rem;">GDG BPPIMT Edition</span>
+      </div>
+      <div class="footer-actions">
+        <button id="download-report-btn" class="btn-ghost" type="button">Download Report (.md)</button>
+        <button id="print-report-btn" class="btn-ghost" type="button">Print / Save as PDF</button>
+        <button id="reset-btn" class="btn-ghost" type="button">Start New Analysis</button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- History Modal / Drawer -->
+  <div id="history-modal" class="history-modal" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
+    <div class="history-dialog">
+      <div class="history-header">
+        <h2 id="history-modal-title" style="font-size: 1.35rem;">Analysis Archive</h2>
+        <button id="history-close-btn" class="btn-ghost" type="button" aria-label="Close archive">&times; Close</button>
+      </div>
+      <div id="history-list"></div>
+    </div>
+  </div>
+
+  <!-- Main JavaScript Module -->
+  <script type="module" src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
