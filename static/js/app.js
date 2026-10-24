@@ -404,15 +404,16 @@ function renderSkillsSection(skills) {
   renderCategoryChart(skills.coverage_by_category);
 }
 
-// Exactly one Chart.js visual (Horizontal flat bars, no gridline clutter)
+// Exactly one Chart.js visual (Neobrutalist horizontal bars with bold borders)
 function renderCategoryChart(categoryData) {
   const canvas = document.getElementById("category-chart");
   if (!canvas || !window.Chart || !categoryData) return;
 
   const isDark = document.documentElement.getAttribute("data-theme") === "dark";
-  const inkColor = isDark ? "#A9B2C3" : "#4A5568";
-  const barColor = isDark ? "#6FBF9A" : "#2F6B4F";
-  const ruleColor = isDark ? "#2C3A55" : "#CFC8B6";
+  const textColor = isDark ? "#FFFFFF" : "#000000";
+  const barBg = isDark ? "#4ADE80" : "#A3E635";
+  const barBorder = isDark ? "#FFFFFF" : "#000000";
+  const gridColor = isDark ? "#282830" : "#E2DDD2";
 
   const categories = Object.keys(categoryData).filter(c => {
     const d = categoryData[c];
@@ -433,10 +434,11 @@ function renderCategoryChart(categoryData) {
       datasets: [{
         label: "Skill Coverage (%)",
         data: ratios,
-        backgroundColor: barColor,
-        borderColor: "transparent",
-        borderRadius: 1,
-        barThickness: 12,
+        backgroundColor: barBg,
+        borderColor: barBorder,
+        borderWidth: 2.5,
+        borderRadius: 2,
+        barThickness: 16,
       }]
     },
     options: {
@@ -446,15 +448,17 @@ function renderCategoryChart(categoryData) {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: isDark ? "#17233B" : "#EBE5D6",
-          titleColor: isDark ? "#F1EBDD" : "#14213D",
-          bodyColor: isDark ? "#F1EBDD" : "#14213D",
-          titleFont: { family: "'IBM Plex Mono', monospace", size: 12 },
-          bodyFont: { family: "'IBM Plex Mono', monospace", size: 12 },
-          borderColor: ruleColor,
-          borderWidth: 1,
+          backgroundColor: isDark ? "#1E1E24" : "#FFE600",
+          titleColor: isDark ? "#FFFFFF" : "#000000",
+          bodyColor: isDark ? "#FFFFFF" : "#000000",
+          titleFont: { family: "'IBM Plex Mono', monospace", size: 12, weight: "bold" },
+          bodyFont: { family: "'IBM Plex Mono', monospace", size: 12, weight: "bold" },
+          borderColor: isDark ? "#FFFFFF" : "#000000",
+          borderWidth: 2,
+          padding: 10,
+          cornerRadius: 3,
           callbacks: {
-            label: (ctx) => ` Coverage: ${ctx.raw}%`
+            label: (ctx) => `  Coverage: ${ctx.raw}%`
           }
         }
       },
@@ -463,21 +467,21 @@ function renderCategoryChart(categoryData) {
           min: 0,
           max: 100,
           grid: {
-            color: ruleColor,
-            lineWidth: 0.5,
-            drawBorder: false,
+            color: gridColor,
+            lineWidth: 1.5,
+            drawBorder: true,
           },
           ticks: {
-            color: inkColor,
-            font: { family: "'IBM Plex Mono', monospace", size: 11 },
+            color: textColor,
+            font: { family: "'IBM Plex Mono', monospace", size: 11, weight: "bold" },
             callback: (val) => `${val}%`
           }
         },
         y: {
           grid: { display: false },
           ticks: {
-            color: inkColor,
-            font: { family: "'IBM Plex Sans', sans-serif", size: 12 }
+            color: textColor,
+            font: { family: "'Space Grotesk', sans-serif", size: 12, weight: "bold" }
           }
         }
       }
