@@ -1,0 +1,269 @@
+"""Google Gemini AI integration service using the google-genai SDK.
+
+Features:
+- Reads model from GEMINI_MODEL (default: "gemini-2.5-flash")
+- Enforces strict JSON response format
+- Defensive parsing with markdown fence stripping
+- Comprehensive rule-based fallback engine if API key is missing or call fails/times out
+- Guarantees that the app never crashes due to external AI API failures.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import os
+import re
+from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
+
+DEFAULT_MODEL = "gemini-2.5-flash"
+
+
+def build_rule_based_fallback(
+    matched_skills: List[str],
+    missing_skills: List[str],
+    weak_verbs: List[Dict[str, Any]],
+    candidate_bullets: List[str],
+    ats_checklist: List[Dict[str, Any]],
+    score: int,
+) -> Dict[str, Any]:
+    """Generate high-utility editorial suggestions using local heuristic engines."""
+    # 1. Actionable suggestions
+    suggestions: List[str] = []
+
+    if missing_skills:
+        top_missing = missing_skills[:4]
+        suggestions.append(
+            f"Bridge Priority Skill Gaps: Incorporate evidence of {', '.join(top_missing)} in your recent projects or work experience sections."
+        )
+
+    if weak_verbs:
+        first_weak = weak_verbs[0]
+        suggestions.append(
+            f"Elevate Action Verbs: Replace passive phrasing like '{first_weak['weak_phrase']}' with decisive power verbs such as {', '.join(first_weak['suggested_alternatives'][:3])}."
+        )
+
+    # ATS check suggestions
+    failed_ats = [c for c in ats_checklist if c.get("status") in ("fail", "warn")]
+    if failed_ats:
+        for item in failed_ats[:2]:
+            suggestions.append(f"ATS Optimization: {item['recommendation']}")
+
+    suggestions.append(
+        "Quantify Technical Impact: Benchmark your contributions with metrics (e.g. latency, throughput, scale, efficiency %, or team size)."
+    )
+
+    if len(suggestions) < 5:
+        suggestions.append(
+            "Mirror Keyword Density: Align your technical section headings and project bullet points with the exact terminology in the job description."
+        )
+    if len(suggestions) < 6:
+        suggestions.append(
+            "Lead With Results: Re-structure experience bullets to place the outcome first, followed by the technical methodology used."
+        )
+
+    # 2. Rewritten bullet points
+    rewritten_bullets: List[Dict[str, str]] = []
+
+    # If we found weak verbs in actual bullets, rewrite those
+    if weak_verbs:
+        for idx, item in enumerate(weak_verbs[:4]):
+            orig = item["sentence_snippet"]
+            phrase = item["weak_phrase"]
+            alt = item["suggested_alternatives"][0]
+            # Replace weak verb with strong alternative
+            revised = re.sub(rf"\b{re.escape(phrase)}\b", alt, orig, count=1, flags=re.IGNORECASE)
+            # Add metric prompt if lacking metrics
+            if not re.search(r"\d+", revised):
+                revised = f"{revised}, achieving a 25% improvement in delivery speed and operational reliability"
+            rewritten_bullets.append({
+                "original": orig,
+                "rewritten": revised,
+                "rationale": f"Replaced passive '{phrase}' with '{alt}' and anchored the claim with quantified business impact.",
+            })
+
+    # If not enough bullets, provide standard before/after examples based on matched skills
+    if len(rewritten_bullets) < 3:
+        top_skill = matched_skills[0] if matched_skills else "software engineering"
+        sample_bullets = [
+            (
+                f"Worked on {top_skill} backend services and fixed bugs.",
+                f"Architected and deployed high-throughput {top_skill} services, reducing average response latency by 35% and improving uptime to 99.9%.",
+                f"Transformed generic maintenance task into a measurable architectural achievement.",
+            ),
+            (
+                "Responsible for team code reviews and writing tests.",
+                "Championed code review standards and test-driven workflows across 6 engineers, boosting test coverage to 88% and cutting production rollbacks.",
+                "Replaced passive duty with engineering leadership and measurable quality indicators.",
+            ),
+            (
+                "Helped build data pipelines and database models.",
+                "Spearheaded end-to-end data pipeline automation, accelerating daily sync intervals from 4 hours to 18 minutes across 2M+ records.",
+                "Emphasized personal ownership, pipeline scale, and direct operational latency reductions.",
+            ),
+        ]
+        for orig, rew, rat in sample_bullets[len(rewritten_bullets):3]:
+            rewritten_bullets.append({
+                "original": orig,
+                "rewritten": rew,
+                "rationale": rat,
+            })
+
+    # 3. Suggested professional summary
+    skills_lead = ", ".join(matched_skills[:3]) if matched_skills else "Modern Software Engineering"
+    tailored_summary = (
+        f"Results-driven software professional with hands-on proficiency in {skills_lead}. "
+        f"Demonstrated history of delivering scalable solutions, architecting reliable systems, "
+        f"and collaborating with cross-functional teams to exceed operational milestones. "
+        f"Eager to leverage strong technical capabilities to drive measurable impact for this role."
+    )
+
+    # 4. Executive summary
+    if score >= 75:
+        exec_sum = (
+            "The candidate possesses a competitive foundation for this position with high alignment "
+            "across core proficiencies. Emphasizing quantified metrics and closing secondary skill gaps will finalize interview readiness."
+        )
+    elif score >= 50:
+        exec_sum = (
+            "The candidate shows demonstrable aptitude and transferable skills, but lacks direct emphasis "
+            "on several critical competencies highlighted in the role requirements."
+        )
+    else:
+        exec_sum = (
+            "Significant foundational gaps currently exist between the resume profile and the target job description. "
+            "Strategic repositioning and skill alignment are strongly advised."
+        )
+
+    return {
+        "executive_summary": exec_sum,
+        "actionable_suggestions": suggestions[:7],
+        "rewritten_bullets": rewritten_bullets[:5],
+        "tailored_professional_summary": tailored_summary,
+        "ai_powered": False,
+        "notice": "Generated via Redline's built-in editorial heuristic engine (AI API key omitted or unavailable).",
+    }
+
+
+def generate_ai_suggestions(
+    resume_text: str,
+    jd_text: str,
+    matched_skills: List[str],
+    missing_skills: List[str],
+    weak_verbs: List[Dict[str, Any]],
+    candidate_bullets: List[str],
+    ats_checklist: List[Dict[str, Any]],
+    score: int,
+) -> Dict[str, Any]:
+    """Call Google Gemini API using google-genai SDK with strict JSON response handling.
+
+    Falls back to heuristic rules if API key is missing or call fails.
+    """
+    api_key = os.environ.get("GEMINI_API_KEY", "").strip()
+    model_name = os.environ.get("GEMINI_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL
+
+    # If no API key is provided, gracefully return local editorial rules
+    if not api_key:
+        logger.info("GEMINI_API_KEY is not set. Using editorial fallback engine.")
+        return build_rule_based_fallback(
+            matched_skills=matched_skills,
+            missing_skills=missing_skills,
+            weak_verbs=weak_verbs,
+            candidate_bullets=candidate_bullets,
+            ats_checklist=ats_checklist,
+            score=score,
+        )
+
+    try:
+        from google import genai
+        from google.genai import types
+
+        client = genai.Client(api_key=api_key)
+
+        # Build compact, information-dense prompt
+        compact_resume = resume_text[:3500].strip()
+        compact_jd = jd_text[:2000].strip()
+
+        weak_samples = [w["sentence_snippet"] for w in weak_verbs[:4]]
+        candidate_sample_bullets = candidate_bullets[:5]
+
+        prompt = f"""
+You are an exacting hiring manager and executive resume editor.
+Evaluate the candidate's resume against the target job description and provide structured JSON improvements.
+
+Target Job Description (Excerpt):
+{compact_jd}
+
+Candidate Resume (Excerpt):
+{compact_resume}
+
+Match Analysis Context:
+- Overall Alignment Score: {score}%
+- Matched Skills: {', '.join(matched_skills[:12]) if matched_skills else 'None identified'}
+- Missing Required Skills: {', '.join(missing_skills[:12]) if missing_skills else 'None identified'}
+- Identified Weak Phrasing / Bullets: {json.dumps(weak_samples or candidate_sample_bullets[:3])}
+
+Output MUST be a single, valid JSON object with EXACTLY this structure:
+{{
+  "executive_summary": "2-3 sentences evaluating the candidate's alignment from an editor's proofing desk perspective.",
+  "actionable_suggestions": [
+    "5 to 7 specific, highly concrete suggestions addressing skill gaps, keyword alignment, and positioning."
+  ],
+  "rewritten_bullets": [
+    {{
+      "original": "Original weak bullet from candidate resume or weak phrasing",
+      "rewritten": "Strong revision using power verb + task + technical tool + quantified metric [X% or numbers]",
+      "rationale": "One concise sentence explaining why this edit significantly increases impact."
+    }}
+  ],
+  "tailored_professional_summary": "A 3-4 sentence high-impact professional summary specifically tailored to this job description."
+}}
+Ensure exactly 5-7 actionable suggestions and 3-5 rewritten bullets. No extra text or conversational filler.
+"""
+
+        # Call Gemini with explicit JSON response request
+        response = client.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.2,
+            ),
+        )
+
+        response_text = response.text or ""
+        # Strip potential markdown formatting if wrapped
+        clean_text = re.sub(r"^```(?:json)?\s*", "", response_text.strip())
+        clean_text = re.sub(r"\s*```$", "", clean_text.strip())
+
+        parsed = json.loads(clean_text)
+
+        # Validate expected keys
+        req_keys = ["executive_summary", "actionable_suggestions", "rewritten_bullets", "tailored_professional_summary"]
+        if not all(k in parsed for k in req_keys):
+            raise ValueError(f"Gemini response missing required keys: {req_keys}")
+
+        return {
+            "executive_summary": str(parsed["executive_summary"]),
+            "actionable_suggestions": list(parsed["actionable_suggestions"])[:7],
+            "rewritten_bullets": list(parsed["rewritten_bullets"])[:5],
+            "tailored_professional_summary": str(parsed["tailored_professional_summary"]),
+            "ai_powered": True,
+            "model_used": model_name,
+            "notice": None,
+        }
+
+    except Exception as exc:
+        logger.warning("Gemini AI API call failed: %s. Falling back to local editorial engine.", str(exc))
+        fallback = build_rule_based_fallback(
+            matched_skills=matched_skills,
+            missing_skills=missing_skills,
+            weak_verbs=weak_verbs,
+            candidate_bullets=candidate_bullets,
+            ats_checklist=ats_checklist,
+            score=score,
+        )
+        fallback["notice"] = f"AI API unavailable ({type(exc).__name__}). Provided via Redline's local editorial engine."
+        return fallback
