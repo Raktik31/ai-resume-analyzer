@@ -1,0 +1,8 @@
+Flask>=3.0.0
+PyMuPDF>=1.23.0
+scikit-learn>=1.4.0
+google-genai>=1.0.0
+python-dotenv>=1.0.0
+Flask-Limiter>=3.5.0
+gunicorn>=21.2.0
+pytest>=8.0.0
