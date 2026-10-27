@@ -45,7 +45,7 @@ Software Engineer | NextGen Digital | August 2020 - June 2022
 - Implemented unit and integration test suites using PyTest, achieving 91% code coverage.
 
 KEY PROJECTS
-Redline Resume Analyzer | Python, Flask, PyMuPDF, Scikit-Learn | github.com/alexchen-dev/redline
+AI Resume Analyzer | Python, Flask, PyMuPDF, Scikit-Learn | github.com/alexchen-dev/ai-resume-analyzer
 - Built an intelligent resume proofing web application that parses PDF resumes and calculates TF-IDF match scores.
 - Implemented ATS validation checklists, weak action verb auditing, and LLM-assisted bullet point revisions.
 
@@ -54,7 +54,7 @@ Distributed Task Queue | Go, Redis, Docker | github.com/alexchen-dev/task-queue
 
 EDUCATION
 B.Tech in Computer Science and Engineering
-BPPIMT, Kolkata | 2016 - 2020 | CGPA: 8.7 / 10.0
+Institute of Engineering & Management, Kolkata | 2016 - 2020 | CGPA: 8.7 / 10.0
 
 CERTIFICATIONS
 - AWS Certified Solutions Architect - Associate | Amazon Web Services (2023)

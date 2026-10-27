@@ -1,4 +1,4 @@
-# Redline — AI Resume Analyzer & Editorial Proofing Desk
+# AI Resume Analyzer
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-3.1+-000000?style=flat&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
@@ -8,13 +8,13 @@
 [![Tests](https://img.shields.io/badge/PyTest-29%20Passing-brightgreen?style=flat&logo=pytest&logoColor=white)](https://pytest.org)
 [![Render](https://img.shields.io/badge/Deploy-Render-46E3B7?style=flat&logo=render&logoColor=white)](https://render.com)
 
-**Redline** is an intelligent, deployable resume analyzer and proofing engine built for the **GDG BPPIMT AI/ML Team selection task**. Built with an authentic **Neobrutalism** theme—featuring high-contrast borders, tactile offset shadows, and vibrant highlighter aesthetics—Redline reviews candidate resumes with the scrutiny of a seasoned technical hiring manager.
+**AI Resume Analyzer** is an intelligent, deployable resume analyzer and proofing engine. Built with an authentic **Neobrutalism** theme—featuring high-contrast borders, tactile offset shadows, and vibrant highlighter aesthetics—AI Resume Analyzer reviews candidate resumes with the scrutiny of a seasoned technical hiring manager.
 
 ---
 
 ## 1. Project Overview & Objectives
 
-Traditional resume checkers are opaque "black boxes" that emit arbitrary percentages without actionable guidance. **Redline** re-engineers resume analysis with full transparency, deep natural language parsing, and robust fallback safety:
+Traditional resume checkers are opaque "black boxes" that emit arbitrary percentages without actionable guidance. **AI Resume Analyzer** re-engineers resume analysis with full transparency, deep natural language parsing, and robust fallback safety:
 
 - **Mathematical Rigor**: Blends n-gram TF-IDF cosine similarity with an extensive 340+ skill taxonomy.
 - **ATS Compliance Auditing**: Evaluates structural parser compliance, contact validity, date consistency, and table/column fragmentation.
@@ -25,10 +25,10 @@ Traditional resume checkers are opaque "black boxes" that emit arbitrary percent
 
 ## 2. Neobrutalist UI Design
 
-Redline embraces a distinctive **Neobrutalism** design language:
+AI Resume Analyzer embraces a distinctive **Neobrutalism** design language:
 - **Bold 3px High-Contrast Borders**: Sharp geometric boundaries across cards, inputs, and badges.
 - **Hard Unblurred Drop Shadows**: `5px 5px 0px #000000` with tactile micro-interactions on hover and active states.
-- **Vibrant Highlighter Accents**: Electric canary yellow (`#FFE600`), mint green (`#4ADE80`), coral redline (`#FF5E5B`), and vivid cyan (`#38BDF8`).
+- **Vibrant Highlighter Accents**: Electric canary yellow (`#FFE600`), mint green (`#4ADE80`), coral red (`#FF5E5B`), and vivid cyan (`#38BDF8`).
 - **Dark Neobrutalism Support**: Persistent dark mode toggling with high-contrast borders and neon accents.
 - **Document-First Flow**: Numbered sections (`01` to `07`), an annotated manuscript view with inline highlights and floating margin notes.
 
@@ -143,7 +143,7 @@ With **105+ alias mappings** and symbol-safe boundary regex logic preventing acc
   - 5 to 7 concrete improvements.
   - 3 to 5 rewritten bullet points using the $[ \text{Action Verb} + \text{Task} + \text{Tech Tool} + \text{Quantified Metric} ]$ formula.
   - A tailored professional summary.
-- **Resilient Fallback**: If `GEMINI_API_KEY` is omitted, or if the API times out/fails, Redline activates its internal deterministic editorial engine. The candidate receives high-utility rule-based suggestions and a polite status badge. **The application never crashes.**
+- **Resilient Fallback**: If `GEMINI_API_KEY` is omitted, or if the API times out/fails, AI Resume Analyzer activates its internal deterministic editorial engine. The candidate receives high-utility rule-based suggestions and a polite status badge. **The application never crashes.**
 
 ---
 
@@ -220,8 +220,8 @@ AI resume analyser/
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/raktikghosh/redline-resume-analyzer.git
-   cd redline-resume-analyzer
+   git clone https://github.com/raktikghosh/ai-resume-analyzer.git
+   cd ai-resume-analyzer
    ```
 
 2. **Create and Activate Virtual Environment**:
@@ -290,7 +290,7 @@ Returns system status, environment, and AI configuration state.
 ```json
 {
   "status": "healthy",
-  "app": "Redline AI Resume Analyzer",
+  "app": "AI Resume Analyzer",
   "version": "1.0.0",
   "environment": "development",
   "ai_configured": true,
@@ -384,7 +384,7 @@ Submits a PDF resume and job description for comprehensive analysis.
 
 ## 10. Production Deployment on Render
 
-Redline includes out-of-the-box configuration for instant deployment on [Render](https://render.com).
+AI Resume Analyzer includes out-of-the-box configuration for instant deployment on [Render](https://render.com).
 
 ### Method 1: Deploy with `render.yaml` Blueprint (Recommended)
 1. Fork or push this repository to your GitHub account.
@@ -434,5 +434,5 @@ Redline includes out-of-the-box configuration for instant deployment on [Render]
 
 ## 13. License & Acknowledgements
 
-Developed with ❤️ for the **GDG BPPIMT AI/ML Team Selection Task**.
+Developed with ❤️.
 Licensed under the [MIT License](LICENSE).

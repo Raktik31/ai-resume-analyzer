@@ -1,6 +1,5 @@
-"""Redline - AI Resume Analyzer Application Factory and Web Server.
+"""AI Resume Analyzer Application Factory and Web Server.
 
-Built for the GDG BPPIMT AI/ML Team selection task.
 Provides PDF ingestion, skill extraction, TF-IDF cosine matching, ATS readiness auditing,
 weak-verb proofing, and Google Gemini AI recommendation endpoints.
 """
@@ -38,17 +37,17 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
-logger = logging.getLogger("redline")
+logger = logging.getLogger("ai_resume_analyzer")
 
 
 def create_app() -> Flask:
-    """Application factory for Redline."""
+    """Application factory for AI Resume Analyzer."""
     app = Flask(__name__)
 
     # Configuration
     max_mb = int(os.environ.get("MAX_CONTENT_LENGTH", 5 * 1024 * 1024))
     app.config["MAX_CONTENT_LENGTH"] = max_mb
-    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key-redline-2026")
+    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key-ai-resume-analyzer-2026")
     app.config["JSON_SORT_KEYS"] = False
 
     # Initialize rate limiter
@@ -119,7 +118,7 @@ def create_app() -> Flask:
     # ---------------------------------------------------------
     @app.route("/")
     def index() -> str:
-        """Render the Redline manuscript editor interface."""
+        """Render the AI Resume Analyzer manuscript editor interface."""
         return render_template("index.html")
 
     @app.route("/api/health", methods=["GET"])
@@ -130,7 +129,7 @@ def create_app() -> Flask:
 
         return jsonify({
             "status": "healthy",
-            "app": "Redline AI Resume Analyzer",
+            "app": "AI Resume Analyzer",
             "version": "1.0.0",
             "environment": os.environ.get("FLASK_ENV", "production"),
             "ai_configured": has_api_key,
