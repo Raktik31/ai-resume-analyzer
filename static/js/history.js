@@ -1,9 +1,9 @@
 /**
- * Redline - Analysis History Manager (localStorage)
+ * AI Resume Analyzer - Analysis History Manager (localStorage)
  * Saves analysis results (never resume file/PDF), enables viewing, restoring, and deleting history.
  */
 
-const HISTORY_STORAGE_KEY = "redline_analysis_history";
+const HISTORY_STORAGE_KEY = "ai-resume-analyzer-history";
 const MAX_HISTORY_ITEMS = 25;
 
 export function getHistory() {
@@ -21,7 +21,7 @@ export function saveToHistory(analysisResult) {
 
   const history = getHistory();
   const newItem = {
-    id: "redline_" + Date.now(),
+    id: "analyzer_" + Date.now(),
     timestamp: analysisResult.timestamp || new Date().toISOString(),
     filename: analysisResult.metadata?.filename || "Resume",
     score: analysisResult.match?.overall_score ?? 0,

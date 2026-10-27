@@ -1,5 +1,5 @@
 /**
- * Redline - Core Frontend Application Controller
+ * AI Resume Analyzer - Core Frontend Application Controller
  * Handles file drop, live validation, asynchronous analysis, Chart.js visualization,
  * theme management, and rendering of all manuscript sections.
  */
@@ -22,19 +22,21 @@ const PROGRESS_PHRASES = [
 ];
 
 // Document Ready
-document.addEventListener("DOMContentLoaded", () => {
-  initTheme();
-  initFormInteractions();
-  initHistoryControls();
-  initReportControls();
-});
+if (typeof document !== "undefined") {
+  document.addEventListener("DOMContentLoaded", () => {
+    initTheme();
+    initFormInteractions();
+    initHistoryControls();
+    initReportControls();
+  });
+}
 
 /* --------------------------------------------------------------------------
    Theme Management (Light / Dark Mode, respects prefers-color-scheme)
    -------------------------------------------------------------------------- */
 function initTheme() {
   const themeToggle = document.getElementById("theme-toggle");
-  const storedTheme = localStorage.getItem("redline_theme");
+  const storedTheme = localStorage.getItem("ai-resume-analyzer-theme");
   const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
   const currentTheme = storedTheme || (prefersDark ? "dark" : "light");
@@ -46,7 +48,7 @@ function initTheme() {
       const active = document.documentElement.getAttribute("data-theme");
       const next = active === "dark" ? "light" : "dark";
       document.documentElement.setAttribute("data-theme", next);
-      localStorage.setItem("redline_theme", next);
+      localStorage.setItem("ai-resume-analyzer-theme", next);
       updateThemeButtonLabel(next);
       // Re-render chart if active so palette updates
       if (currentAnalysisData && currentAnalysisData.match) {
@@ -57,7 +59,7 @@ function initTheme() {
 
   // Listen for system OS changes if user hasn't explicitly set preference
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
-    if (!localStorage.getItem("redline_theme")) {
+    if (!localStorage.getItem("ai-resume-analyzer-theme")) {
       const next = e.matches ? "dark" : "light";
       document.documentElement.setAttribute("data-theme", next);
       updateThemeButtonLabel(next);
@@ -159,7 +161,7 @@ function initFormInteractions() {
 
     // Client-side MIME validation (if reported by browser)
     if (file.type && file.type !== "application/pdf" && file.type !== "application/x-pdf") {
-      showStatusMessage(`Invalid file type (${file.type}). Redline only accepts PDF documents.`, "error");
+      showStatusMessage(`Invalid file type (${file.type}). AI Resume Analyzer only accepts PDF documents.`, "error");
       fileInput.value = "";
       return;
     }
@@ -382,18 +384,28 @@ function renderSkillsSection(skills) {
   if (barsContainer && skills.coverage_by_category) {
     barsContainer.innerHTML = "";
     Object.entries(skills.coverage_by_category).forEach(([category, data]) => {
+      const total = Number(data.jd_count) || 0;
+      const resumeCount = Number(data.resume_count) || 0;
+
       // Only display categories relevant to the JD or resume
-      if (data.jd_count > 0 || data.resume_count > 0) {
+      if (total > 0 || resumeCount > 0) {
         const row = document.createElement("div");
         row.className = "bar-row";
 
-        const pct = Math.round(data.ratio * 100);
+        const matched = Number(data.matched_count) || 0;
+        const cov = computeBarCoverage(matched, total, category);
+
         row.innerHTML = `
-          <div class="bar-label">${escapeHtml(category)}</div>
-          <div class="thin-track">
-            <div class="thin-fill" style="width: ${pct}%;"></div>
+          <div class="bar-label" title="${escapeHtml(category)}">${escapeHtml(category)}</div>
+          <div class="thin-track ${cov.stateClass}"
+               role="progressbar"
+               aria-valuenow="${cov.ariaValueNow}"
+               aria-valuemin="0"
+               aria-valuemax="100"
+               aria-label="${escapeHtml(cov.ariaLabel)}">
+            <div class="thin-fill ${cov.stateClass}" style="width: ${cov.widthPct}%; background-color: ${cov.colorVar};"></div>
           </div>
-          <div class="bar-val">${data.matched_count}/${data.jd_count || data.resume_count}</div>
+          <div class="bar-val ${cov.stateClass}">${cov.countText}</div>
         `;
         barsContainer.appendChild(row);
       }
@@ -404,23 +416,110 @@ function renderSkillsSection(skills) {
   renderCategoryChart(skills.coverage_by_category);
 }
 
-// Exactly one Chart.js visual (Neobrutalist horizontal bars with bold borders)
+/**
+ * Compute progress bar coverage attributes and styles.
+ *
+ * Requirements:
+ * - matched / total * 100
+ * - If total is 0: show empty bar (0% width) and count "n/a", never 100%
+ * - Colors: 0% = --bad, under 50% = --warn, 50% and over = --good
+ * - Minimum visible tick only if matched > 0 and width would be under 3%
+ * - ARIA attributes: role="progressbar", aria-valuenow, aria-valuemin="0", aria-valuemax="100",
+ *   and aria-label like "Core Concepts: 0 of 2 skills matched"
+ */
+function computeBarCoverage(matched, total, categoryName) {
+  const m = Number(matched) || 0;
+  const t = Number(total) || 0;
+
+  if (t <= 0) {
+    return {
+      ratio: 0,
+      pct: 0,
+      widthPct: 0,
+      countText: "n/a",
+      stateClass: "state-na",
+      colorVar: "var(--text-muted)",
+      ariaValueNow: 0,
+      ariaLabel: `${categoryName}: n/a (0 skills required)`
+    };
+  }
+
+  const rawRatio = m / t;
+  const pct = Math.round(rawRatio * 100);
+  let widthPct = rawRatio * 100;
+
+  // Add a minimum visible tick only if matched > 0 and width would be under 3%
+  if (m > 0 && widthPct > 0 && widthPct < 3) {
+    widthPct = 3;
+  }
+  widthPct = Math.max(0, Math.min(100, widthPct));
+
+  let stateClass = "state-good";
+  let colorVar = "var(--good)";
+
+  if (pct === 0) {
+    stateClass = "state-bad";
+    colorVar = "var(--bad)";
+  } else if (pct < 50) {
+    stateClass = "state-warn";
+    colorVar = "var(--warn)";
+  } else {
+    stateClass = "state-good";
+    colorVar = "var(--good)";
+  }
+
+  return {
+    ratio: rawRatio,
+    pct: pct,
+    widthPct: widthPct,
+    countText: `${m}/${t}`,
+    stateClass: stateClass,
+    colorVar: colorVar,
+    ariaValueNow: pct,
+    ariaLabel: `${categoryName}: ${m} of ${t} skills matched`
+  };
+}
+
+if (typeof window !== "undefined") {
+  window.computeBarCoverage = computeBarCoverage;
+}
+
+// Exactly one Chart.js visual (Horizontal flat bars matching the category bars)
 function renderCategoryChart(categoryData) {
   const canvas = document.getElementById("category-chart");
   if (!canvas || !window.Chart || !categoryData) return;
 
   const isDark = document.documentElement.getAttribute("data-theme") === "dark";
   const textColor = isDark ? "#FFFFFF" : "#000000";
-  const barBg = isDark ? "#4ADE80" : "#A3E635";
-  const barBorder = isDark ? "#FFFFFF" : "#000000";
   const gridColor = isDark ? "#282830" : "#E2DDD2";
+  const barBorder = isDark ? "#FFFFFF" : "#000000";
+
+  // Existing palette colors: 0% = --bad, under 50% = --warn, 50%+ = --good
+  const colorBad = isDark ? "#E07A6B" : "#A63A2B";
+  const colorWarn = isDark ? "#D9B24C" : "#A27B1E";
+  const colorGood = isDark ? "#6FBF9A" : "#2F6B4F";
 
   const categories = Object.keys(categoryData).filter(c => {
     const d = categoryData[c];
-    return d.jd_count > 0 || d.resume_count > 0;
+    return (Number(d.jd_count) || 0) > 0 || (Number(d.resume_count) || 0) > 0;
   });
 
-  const ratios = categories.map(c => Math.round(categoryData[c].ratio * 100));
+  const computedItems = categories.map(cat => {
+    const d = categoryData[cat];
+    const total = Number(d.jd_count) || 0;
+    const matched = Number(d.matched_count) || 0;
+    return {
+      category: cat,
+      ...computeBarCoverage(matched, total, cat)
+    };
+  });
+
+  const ratios = computedItems.map(item => item.pct);
+  const barColors = computedItems.map(item => {
+    if (item.countText === "n/a" || item.pct === 0) return colorBad;
+    if (item.pct < 50) return colorWarn;
+    return colorGood;
+  });
 
   if (categoryChartInstance) {
     categoryChartInstance.destroy();
@@ -434,11 +533,11 @@ function renderCategoryChart(categoryData) {
       datasets: [{
         label: "Skill Coverage (%)",
         data: ratios,
-        backgroundColor: barBg,
+        backgroundColor: barColors,
         borderColor: barBorder,
-        borderWidth: 2.5,
+        borderWidth: 1.5,
         borderRadius: 2,
-        barThickness: 16,
+        barThickness: 14,
       }]
     },
     options: {
@@ -458,7 +557,13 @@ function renderCategoryChart(categoryData) {
           padding: 10,
           cornerRadius: 3,
           callbacks: {
-            label: (ctx) => `  Coverage: ${ctx.raw}%`
+            label: (ctx) => {
+              const item = computedItems[ctx.dataIndex];
+              if (item.countText === "n/a") {
+                return `  Coverage: n/a (0 required in job description)`;
+              }
+              return `  Coverage: ${item.pct}% (${item.countText} matched)`;
+            }
           }
         }
       },
@@ -468,7 +573,7 @@ function renderCategoryChart(categoryData) {
           max: 100,
           grid: {
             color: gridColor,
-            lineWidth: 1.5,
+            lineWidth: 1,
             drawBorder: true,
           },
           ticks: {
@@ -802,3 +907,5 @@ function escapeHtml(str) {
 function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+
+export { computeBarCoverage };

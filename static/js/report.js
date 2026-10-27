@@ -1,5 +1,5 @@
 /**
- * Redline - Editorial Report Generator & Export Utilities
+ * AI Resume Analyzer - Editorial Report Generator & Export Utilities
  * Produces structured Markdown / Plain Text proofing desk reports and triggers print.
  */
 
@@ -16,7 +16,7 @@ export function buildMarkdownReport(data) {
   const improver = data.improvement_assistant || {};
   const ai = data.ai_suggestions || {};
 
-  let md = `# REDLINE EDITORIAL PROOFING REPORT
+  let md = `# AI RESUME ANALYZER EDITORIAL REPORT
 ================================================================================
 Document: ${filename}
 Generated: ${dateStr}
@@ -82,7 +82,7 @@ Suggested Tailored Professional Summary:
 ${ai.tailored_professional_summary || "N/A"}
 
 ================================================================================
-Report produced by Redline - A second pair of eyes on your resume.
+Report produced by AI Resume Analyzer - A second pair of eyes on your resume.
 `;
 
   return md;
@@ -90,7 +90,7 @@ Report produced by Redline - A second pair of eyes on your resume.
 
 export function downloadReport(data) {
   const content = buildMarkdownReport(data);
-  const filename = (data.metadata?.filename?.replace(/\.pdf$/i, "") || "resume") + "_redline_report.md";
+  const filename = (data.metadata?.filename?.replace(/\.pdf$/i, "") || "resume") + "_ai_resume_analyzer_report.md";
 
   const blob = new Blob([content], { type: "text/markdown;charset=utf-8" });
   const url = URL.createObjectURL(blob);
