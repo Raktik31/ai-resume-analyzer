@@ -172,7 +172,7 @@ def extract_pdf_text(file_bytes: bytes) -> Dict[str, Any]:
             if total_images > 0:
                 warning_msg = (
                     "This PDF appears to be a scanned image or photograph without selectable text. "
-                    "Redline requires selectable text to analyze your resume accurately. "
+                    "AI Resume Analyzer requires selectable text to analyze your resume accurately. "
                     "Please upload a PDF exported directly from Word, Google Docs, Canva, or LaTeX."
                 )
             else:

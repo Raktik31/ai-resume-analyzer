@@ -1,1 +1,1 @@
-"""Test suite package for Redline AI Resume Analyzer."""
+"""Test suite package for AI Resume Analyzer."""

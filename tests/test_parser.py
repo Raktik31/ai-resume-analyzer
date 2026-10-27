@@ -44,7 +44,7 @@ def test_split_sections():
 
     EDUCATION
     B.Tech in Computer Science
-    BPPIMT, 2017 - 2021
+    Institute of Technology, 2017 - 2021
     """
     sections = split_sections(text)
     assert "summary" in sections

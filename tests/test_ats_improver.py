@@ -14,7 +14,7 @@ def test_ats_readiness_evaluation():
     Experienced engineer with focus on backend distributed systems.
 
     EDUCATION
-    B.Tech in Computer Science, BPPIMT 2018 - 2022
+    B.Tech in Computer Science, Institute of Technology 2018 - 2022
 
     EXPERIENCE
     Software Engineer at TechCorp (2022 - Present)
@@ -24,7 +24,7 @@ def test_ats_readiness_evaluation():
     Python, Flask, Docker, PostgreSQL
 
     PROJECTS
-    Redline Analyzer
+    AI Resume Analyzer Tool
     - ATS proofing tool
     """
     parsed = parse_resume(sample)

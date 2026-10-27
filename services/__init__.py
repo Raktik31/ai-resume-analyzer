@@ -1,1 +1,1 @@
-"""Services package for Redline AI Resume Analyzer."""
+"""Services package for AI Resume Analyzer."""

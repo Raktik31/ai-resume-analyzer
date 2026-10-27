@@ -1,4 +1,4 @@
-"""API integration and route tests for Redline Flask application."""
+"""API integration and route tests for AI Resume Analyzer Flask application."""
 
 import io
 from pathlib import Path
@@ -19,7 +19,8 @@ def client():
 def test_index_route(client):
     response = client.get("/")
     assert response.status_code == 200
-    assert b"Redline" in response.data
+    assert b"AI Resume Analyzer" in response.data
+    assert b"Redline" not in response.data
     assert b"Submission" in response.data
 
 
@@ -28,7 +29,7 @@ def test_health_check_route(client):
     assert response.status_code == 200
     data = response.get_json()
     assert data["status"] == "healthy"
-    assert data["app"] == "Redline AI Resume Analyzer"
+    assert data["app"] == "AI Resume Analyzer"
 
 
 def test_analyze_missing_job_description(client):

@@ -166,6 +166,33 @@ def extract_skills(text: str, taxonomy: Optional[Dict[str, Any]] = None) -> Dict
     }
 
 
+def compute_category_coverage(matched_count: int, total_jd_count: int) -> Dict[str, Any]:
+    """Compute skill coverage ratio, percentage, and label for a category.
+
+    Guards against division by zero:
+    - 0/2 gives 0%
+    - 1/2 gives 50%
+    - 2/2 gives 100%
+    - 0/0 gives n/a
+    """
+    if total_jd_count <= 0:
+        return {
+            "ratio": 0.0,
+            "percentage": 0,
+            "text": "n/a",
+            "is_na": True,
+        }
+
+    ratio = matched_count / total_jd_count
+    percentage = round(ratio * 100)
+    return {
+        "ratio": round(ratio, 4),
+        "percentage": percentage,
+        "text": f"{percentage}%",
+        "is_na": False,
+    }
+
+
 def compute_skill_overlap(
     resume_skills: List[str],
     jd_skills: List[str],
@@ -204,14 +231,17 @@ def compute_skill_overlap(
 
         cat_total_jd = len(cat_jd_skills)
         cat_matched_count = len(cat_matched_skills)
-        cat_ratio = (cat_matched_count / cat_total_jd) if cat_total_jd > 0 else (1.0 if cat_resume_skills else 0.0)
+        cov = compute_category_coverage(cat_matched_count, cat_total_jd)
 
         coverage_by_category[cat] = {
             "jd_count": cat_total_jd,
             "matched_count": cat_matched_count,
             "missing_count": len(cat_missing_skills),
             "resume_count": len(cat_resume_skills),
-            "ratio": round(cat_ratio, 3),
+            "ratio": round(cov["ratio"], 3),
+            "percentage": cov["percentage"],
+            "coverage_text": cov["text"],
+            "is_na": cov["is_na"],
             "matched_skills": cat_matched_skills,
             "missing_skills": cat_missing_skills,
         }

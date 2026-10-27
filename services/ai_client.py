@@ -14,11 +14,28 @@ import json
 import logging
 import os
 import re
+import time
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_MODEL = "gemini-2.5-flash"
+DEFAULT_MODEL = "gemini-3.5-flash-lite"
+
+
+def map_error_to_notice(status_code: Optional[int], exc: Optional[Exception]) -> str:
+    """Map exception details to a concise, non-generic, user-facing notice."""
+    if not exc:
+        return "Request was rejected by the API"
+    msg = str(exc).lower()
+    if status_code in (401, 403) or "api_key_invalid" in msg or "invalid api key" in msg or "unauthenticated" in msg or "permission_denied" in msg:
+        return "Invalid API key"
+    if status_code == 404 or "not_found" in msg or "not found" in msg or "no longer available" in msg:
+        return "Model not found"
+    if status_code in (429, 503) or "resource_exhausted" in msg or "rate limit" in msg or "quota" in msg or "high demand" in msg:
+        return "Rate limit reached, try again in a minute"
+    if status_code == 400 or "invalid_argument" in msg:
+        return "Request was rejected by the API"
+    return "Request was rejected by the API"
 
 
 def build_rule_based_fallback(
@@ -143,7 +160,7 @@ def build_rule_based_fallback(
         "rewritten_bullets": rewritten_bullets[:5],
         "tailored_professional_summary": tailored_summary,
         "ai_powered": False,
-        "notice": "Generated via Redline's built-in editorial heuristic engine (AI API key omitted or unavailable).",
+        "notice": "Provided via the local analysis engine",
     }
 
 
@@ -162,12 +179,12 @@ def generate_ai_suggestions(
     Falls back to heuristic rules if API key is missing or call fails.
     """
     api_key = os.environ.get("GEMINI_API_KEY", "").strip()
-    model_name = os.environ.get("GEMINI_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL
+    configured_model = os.environ.get("GEMINI_MODEL", "").strip() or DEFAULT_MODEL
 
     # If no API key is provided, gracefully return local editorial rules
     if not api_key:
-        logger.info("GEMINI_API_KEY is not set. Using editorial fallback engine.")
-        return build_rule_based_fallback(
+        logger.warning("GEMINI_API_KEY is not set. Using editorial fallback engine.")
+        fallback = build_rule_based_fallback(
             matched_skills=matched_skills,
             missing_skills=missing_skills,
             weak_verbs=weak_verbs,
@@ -175,21 +192,30 @@ def generate_ai_suggestions(
             ats_checklist=ats_checklist,
             score=score,
         )
+        fallback["notice"] = "Invalid API key"
+        return fallback
 
-    try:
-        from google import genai
-        from google.genai import types
+    # Candidate models to try in priority order:
+    candidate_models: List[str] = []
+    for m in [
+        configured_model,
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-lite",
+        "gemini-3.5-flash-lite",
+        "gemini-3.5-flash",
+        "gemini-3.8-flash",
+    ]:
+        if m and m not in candidate_models:
+            candidate_models.append(m)
 
-        client = genai.Client(api_key=api_key)
+    # Build compact, information-dense prompt
+    compact_resume = resume_text[:3500].strip()
+    compact_jd = jd_text[:2000].strip()
 
-        # Build compact, information-dense prompt
-        compact_resume = resume_text[:3500].strip()
-        compact_jd = jd_text[:2000].strip()
+    weak_samples = [w["sentence_snippet"] for w in weak_verbs[:4]]
+    candidate_sample_bullets = candidate_bullets[:5]
 
-        weak_samples = [w["sentence_snippet"] for w in weak_verbs[:4]]
-        candidate_sample_bullets = candidate_bullets[:5]
-
-        prompt = f"""
+    prompt = f"""
 You are an exacting hiring manager and executive resume editor.
 Evaluate the candidate's resume against the target job description and provide structured JSON improvements.
 
@@ -223,47 +249,129 @@ Output MUST be a single, valid JSON object with EXACTLY this structure:
 Ensure exactly 5-7 actionable suggestions and 3-5 rewritten bullets. No extra text or conversational filler.
 """
 
-        # Call Gemini with explicit JSON response request
-        response = client.models.generate_content(
-            model=model_name,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                temperature=0.2,
-            ),
-        )
+    last_exc: Optional[Exception] = None
+    last_status: Optional[int] = None
 
-        response_text = response.text or ""
-        # Strip potential markdown formatting if wrapped
-        clean_text = re.sub(r"^```(?:json)?\s*", "", response_text.strip())
-        clean_text = re.sub(r"\s*```$", "", clean_text.strip())
+    try:
+        from google import genai
+        from google.genai import types
 
-        parsed = json.loads(clean_text)
+        client = genai.Client(api_key=api_key)
 
-        # Validate expected keys
-        req_keys = ["executive_summary", "actionable_suggestions", "rewritten_bullets", "tailored_professional_summary"]
-        if not all(k in parsed for k in req_keys):
-            raise ValueError(f"Gemini response missing required keys: {req_keys}")
+        for current_model in candidate_models:
+            max_retries = 2
+            for attempt in range(max_retries):
+                try:
+                    response = client.models.generate_content(
+                        model=current_model,
+                        contents=prompt,
+                        config=types.GenerateContentConfig(
+                            response_mime_type="application/json",
+                            temperature=0.2,
+                        ),
+                    )
 
-        return {
-            "executive_summary": str(parsed["executive_summary"]),
-            "actionable_suggestions": list(parsed["actionable_suggestions"])[:7],
-            "rewritten_bullets": list(parsed["rewritten_bullets"])[:5],
-            "tailored_professional_summary": str(parsed["tailored_professional_summary"]),
-            "ai_powered": True,
-            "model_used": model_name,
-            "notice": None,
-        }
+                    response_text = response.text or ""
+                    # Strip potential markdown formatting if wrapped
+                    clean_text = re.sub(r"^```(?:json)?\s*", "", response_text.strip())
+                    clean_text = re.sub(r"\s*```$", "", clean_text.strip())
 
-    except Exception as exc:
-        logger.warning("Gemini AI API call failed: %s. Falling back to local editorial engine.", str(exc))
-        fallback = build_rule_based_fallback(
-            matched_skills=matched_skills,
-            missing_skills=missing_skills,
-            weak_verbs=weak_verbs,
-            candidate_bullets=candidate_bullets,
-            ats_checklist=ats_checklist,
-            score=score,
-        )
-        fallback["notice"] = f"AI API unavailable ({type(exc).__name__}). Provided via Redline's local editorial engine."
-        return fallback
+                    parsed = json.loads(clean_text)
+
+                    # Validate expected keys
+                    req_keys = [
+                        "executive_summary",
+                        "actionable_suggestions",
+                        "rewritten_bullets",
+                        "tailored_professional_summary",
+                    ]
+                    if not all(k in parsed for k in req_keys):
+                        raise ValueError(f"Gemini response missing required keys: {req_keys}")
+
+                    logger.info("Successfully generated AI suggestions using model '%s'.", current_model)
+                    return {
+                        "executive_summary": str(parsed["executive_summary"]),
+                        "actionable_suggestions": list(parsed["actionable_suggestions"])[:7],
+                        "rewritten_bullets": list(parsed["rewritten_bullets"])[:5],
+                        "tailored_professional_summary": str(parsed["tailored_professional_summary"]),
+                        "ai_powered": True,
+                        "model_used": current_model,
+                        "notice": None,
+                    }
+
+                except Exception as exc:
+                    last_exc = exc
+                    status_code = getattr(exc, "status_code", None) or getattr(exc, "code", None)
+                    if status_code is not None:
+                        try:
+                            last_status = int(status_code)
+                        except (ValueError, TypeError):
+                            last_status = None
+
+                    msg_lower = str(exc).lower()
+
+                    # Handle 429 or 503 rate limiting / temporary spikes: retry with backoff, then fall back
+                    if last_status in (429, 503) or "resource_exhausted" in msg_lower or "high demand" in msg_lower:
+                        if attempt < max_retries - 1:
+                            sleep_time = 1.5 * (attempt + 1)
+                            logger.warning(
+                                "Rate limit or temporary overload on model %s (status %s). Retrying in %.1fs...",
+                                current_model,
+                                last_status,
+                                sleep_time,
+                            )
+                            time.sleep(sleep_time)
+                            continue
+                        else:
+                            logger.warning(
+                                "Model %s rate limit exceeded. Falling back to next available model.",
+                                current_model,
+                            )
+                            break  # Try next fallback model
+
+                    # Handle 404 (model deprecated or unavailable): immediately fall back to next model
+                    elif last_status == 404 or "not_found" in msg_lower or "no longer available" in msg_lower:
+                        logger.warning(
+                            "Model %s returned 404 NOT_FOUND. Falling back to next model.",
+                            current_model,
+                        )
+                        break
+
+                    # Other client or server errors: break to try next model or report error
+                    else:
+                        logger.warning(
+                            "Model %s failed with %s (status %s).",
+                            current_model,
+                            type(exc).__name__,
+                            last_status,
+                        )
+                        break
+
+    except Exception as setup_exc:
+        last_exc = setup_exc
+        last_status = getattr(setup_exc, "status_code", None) or getattr(setup_exc, "code", None)
+
+    # All attempts failed: log real status and message to console (never key or resume text)
+    safe_msg = str(last_exc) if last_exc else "Unknown failure"
+    if api_key and api_key in safe_msg:
+        safe_msg = safe_msg.replace(api_key, "[REDACTED_API_KEY]")
+    if resume_text and len(resume_text) > 40 and resume_text[:40] in safe_msg:
+        safe_msg = safe_msg.split(resume_text[:30])[0] + " [RESUME_TEXT_REDACTED]"
+
+    logger.error(
+        "Gemini AI API call failed. Status code: %s, Message: %s",
+        last_status,
+        safe_msg,
+    )
+
+    specific_reason = map_error_to_notice(last_status, last_exc)
+    fallback = build_rule_based_fallback(
+        matched_skills=matched_skills,
+        missing_skills=missing_skills,
+        weak_verbs=weak_verbs,
+        candidate_bullets=candidate_bullets,
+        ats_checklist=ats_checklist,
+        score=score,
+    )
+    fallback["notice"] = specific_reason
+    return fallback

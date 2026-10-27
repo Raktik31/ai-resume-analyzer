@@ -182,8 +182,11 @@ def parse_education(section_text: str) -> List[Dict[str, Any]]:
     }
 
     year_regex = re.compile(r"\b(19\d{2}|20\d{2})\s*(?:[-–—to]+\s*(19\d{2}|20\d{2}|present|expected|current))?", re.IGNORECASE)
-    gpa_regex = re.compile(r"\b(?:gpa|cgpa|percentage|score)?\s*:?\s*(\d(?:\.\d{1,2})?\s*(?:\/\s*(?:4|5|10))?|\d{2}(?:\.\d{1,2})?\s*%)", re.IGNORECASE)
-    inst_regex = re.compile(r"(university|institute|college|school|academy|bppimt|polytechnic)", re.IGNORECASE)
+    gpa_regex = re.compile(
+        r"(?:(?:cgpa|gpa|percentage|score)\s*[:\-]?\s*(\d+(?:\.\d+)?(?:\s*\/\s*\d+)?%?)|(\d(?:\.\d{1,2})?\s*\/\s*(?:4|5|10))|(\b\d{2}(?:\.\d+)?%))",
+        re.IGNORECASE,
+    )
+    inst_regex = re.compile(r"(university|institute|college|school|academy|polytechnic)", re.IGNORECASE)
 
     for line in lines:
         # Check degree
@@ -200,7 +203,9 @@ def parse_education(section_text: str) -> List[Dict[str, Any]]:
 
         # Check GPA
         g_match = gpa_regex.search(line)
-        found_gpa = g_match.group(0).strip() if g_match else None
+        found_gpa = None
+        if g_match:
+            found_gpa = next((g for g in g_match.groups() if g is not None), None) or g_match.group(0).strip()
 
         # Check institution
         is_inst = bool(inst_regex.search(line))
@@ -282,7 +287,8 @@ def parse_experience(section_text: str) -> List[Dict[str, Any]]:
 
         # Detect new role boundary
         if (is_date or is_role) and len(line) < 100 and not is_bullet:
-            if current_entry["title"] or current_entry["bullets"]:
+            has_role_data = bool(current_entry["bullets"] or (current_entry["title"] and (current_entry["company"] or current_entry["duration"])))
+            if has_role_data:
                 entries.append(current_entry)
                 current_entry = {
                     "title": None,
@@ -344,7 +350,7 @@ def parse_projects(section_text: str) -> List[Dict[str, Any]]:
         is_bullet = line.startswith(("-", "•", "*", "–", "—")) or re.match(r"^\d+\.", line)
         has_url = URL_REGEX.search(line)
 
-        # Pipe or separator often used for project titles e.g. "Redline | Flask, PyMuPDF | github.com/..."
+        # Pipe or separator often used for project titles e.g. "AI Resume Analyzer | Flask, PyMuPDF | github.com/..."
         if ("|" in line or ":" in line) and len(line) < 120 and not is_bullet:
             if current_project["title"] or current_project["bullets"]:
                 entries.append(current_project)
